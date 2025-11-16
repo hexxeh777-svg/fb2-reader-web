@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../css/global.css">
+    <title>FB2 Reader - Постраничный просмотр</title>
+</head>
+
+<body>
+
+
+    <style>
+        :root {
+            --bg-dark: #0e0e0e;
+            --bg-panel: #2b2b2b;
+            --text-light: #e0e0f0;
+            --accent-blue: #98b1bc;
+            --border-radius: 8px;
+            --padding: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--padding);
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .upload-area {
+            background-color: var(--bg-panel);
+            border: 2px dashed var(--accent-blue);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 24px;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            background-color: #3a3a3a;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            background-color: var(--bg-panel);
+            color: var(--text-light);
+            border: 1px solid var(--accent-blue);
+            border-radius: var(--border-radius);
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-blue);
+            color: var(--bg-dark);
+        }
+
+        .tts-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #333;
+        }
+
+        .tts-btn {
+            background-color: var(--bg-panel);
+            color: var(--text-light);
+            border: 1px solid var(--accent-blue);
+            border-radius: var(--border-radius);
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tts-btn:hover {
+            background-color: var(--accent-blue);
+            color: var(--bg-dark);
+        }
+
+        .tts-status {
+            font-size: 0.9em;
+            opacity: 0.8;
+            padding: 8px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tts-voice-select {
+            padding: 8px 12px;
+            font-size: 0.9em;
+            background-color: var(--bg-panel);
+            color: var(--text-light);
+            border: 1px solid var(--accent-blue);
+            border-radius: var(--border-radius);
+            margin-right: 10px;
+        }
+
+        .content {
+            background-color: var(--bg-panel);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            flex: 1;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .book-info {
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #333;
+            flex-shrink: 0;
+        }
+
+        .book-title {
+            font-size: 1.5em;
+            color: var(--accent-blue);
+            margin: 0 0 8px 0;
+        }
+
+        .book-author {
+            font-size: 1.1em;
+            opacity: 0.8;
+            margin: 0;
+        }
+
+        .book-content-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #333;
+        }
+
+        .book-content {
+            font-size: 1.1em;
+            line-height: 1.8;
+        }
+
+        .book-content h2 {
+            color: var(--accent-blue);
+            margin-top: 1.5em;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background-color: #333;
+            margin: 16px 0;
+            border-radius: 2px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: var(--accent-blue);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #333;
+            flex-shrink: 0;
+        }
+
+        .page-info {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .page-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        .page-indicators {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .page-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #444;
+        }
+
+        .page-indicator.active {
+            background-color: var(--accent-blue);
+        }
+
+        /* === Новые стили для поля перехода по странице === */
+        .page-jump-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #333;
+        }
+
+        .page-jump-input {
+            width: 80px;
+            padding: 8px 12px;
+            font-size: 1em;
+            background-color: var(--bg-panel);
+            color: var(--text-light);
+            border: 1px solid var(--accent-blue);
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .page-jump-btn {
+            background-color: var(--accent-blue);
+            color: var(--bg-dark);
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .page-jump-btn:hover {
+            background-color: #7a96a4;
+        }
+    </style>
+    </head>
+
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>FB2 Reader</h1>
+                <p>Чтение книг в формате FB2</p>
+            </div>
+
+            <div id="uploadScreen">
+                <div class="upload-area" id="dropArea">
+                    <h3>Загрузите FB2 файл</h3>
+                    <p>Перетащите сюда или нажмите для выбора</p>
+                    <input type="file" id="fileInput" accept=".fb2" class="hidden">
+                </div>
+            </div>
+
+            <div id="readerScreen" class="hidden">
+                <div class="controls">
+                    <button class="btn" id="fontSizeUp">Шрифт +</button>
+                    <button class="btn" id="fontSizeDown">Шрифт -</button>
+                    <button class="btn" id="themeBtn">Светлая тема</button>
+                    <button class="btn" id="closeBtn">Закрыть</button>
+                </div>
+
+                <!-- Блок управления TTS -->
+                <div class="tts-controls">
+                    <select id="ttsVoiceSelect" class="tts-voice-select">
+                        <option value="">Загрузка голосов...</option>
+                    </select>
+                    <button class="tts-btn" id="ttsPlayBtn">▶️ Воспроизвести</button>
+                    <button class="tts-btn" id="ttsStopBtn">⏹️ Стоп</button>
+                    <button class="tts-btn" id="ttsPauseBtn">⏸️ Пауза</button>
+                    <button class="tts-btn" id="ttsResumeBtn">▶️ Продолжить</button>
+                    <input type="range" id="ttsVolume" min="0" max="1" step="0.1" value="0.8" style="width: 80px;">
+                    <span class="tts-status" id="ttsStatus">Готов</span>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress" id="progressBar"></div>
+                </div>
+
+                <div class="content">
+                    <div class="book-info">
+                        <div class="book-title" id="bookTitle">Заголовок книги</div>
+                        <div class="book-author" id="bookAuthor">Автор</div>
+                    </div>
+                    <div class="book-content-wrapper">
+                        <div class="book-content" id="bookContent">
+                            <!-- Содержимое книги будет здесь -->
+                        </div>
+                    </div>
+
+                    <div class="pagination-controls">
+                        <div class="page-info">
+                            Страница <span id="currentPage">1</span> из <span id="totalPages">1</span>
+                        </div>
+                        <div class="page-nav">
+                            <button class="btn" id="firstPageBtn"><<</button>
+                            <button class="btn" id="prevPageBtn"><</button>
+                            <button class="btn" id="nextPageBtn">></button>
+                            <button class="btn" id="lastPageBtn">>></button>
+                        </div>
+                    </div>
+
+                    <div class="page-indicators" id="pageIndicators">
+                        <!-- Индикаторы страниц -->
+                    </div>
+
+                    <!-- === Новое поле ввода страницы === -->
+                    <div class="page-jump-controls">
+                        <span>Перейти к странице:</span>
+                        <input type="number" id="pageJumpInput" class="page-jump-input" min="1" placeholder="1">
+                        <button id="pageJumpBtn" class="page-jump-btn">→</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const fileInput = document.getElementById('fileInput');
+                const dropArea = document.getElementById('dropArea');
+                const uploadScreen = document.getElementById('uploadScreen');
+                const readerScreen = document.getElementById('readerScreen');
+                const bookTitle = document.getElementById('bookTitle');
+                const bookAuthor = document.getElementById('bookAuthor');
+                const bookContent = document.getElementById('bookContent');
+                const prevBtn = document.getElementById('prevBtn');
+                const nextBtn = document.getElementById('nextBtn');
+                const fontSizeUp = document.getElementById('fontSizeUp');
+                const fontSizeDown = document.getElementById('fontSizeDown');
+                const themeBtn = document.getElementById('themeBtn');
+                const closeBtn = document.getElementById('closeBtn');
+                const progressBar = document.getElementById('progressBar');
+                const currentPageSpan = document.getElementById('currentPage');
+                const totalPagesSpan = document.getElementById('totalPages');
+                const firstPageBtn = document.getElementById('firstPageBtn');
+                const prevPageBtn = document.getElementById('prevPageBtn');
+                const nextPageBtn = document.getElementById('nextPageBtn');
+                const lastPageBtn = document.getElementById('lastPageBtn');
+                const pageIndicatorsContainer = document.getElementById('pageIndicators');
+
+                // Новые элементы для перехода по странице
+                const pageJumpInput = document.getElementById('pageJumpInput');
+                const pageJumpBtn = document.getElementById('pageJumpBtn');
+
+                // Элементы TTS
+                const ttsPlayBtn = document.getElementById('ttsPlayBtn');
+                const ttsStopBtn = document.getElementById('ttsStopBtn');
+                const ttsPauseBtn = document.getElementById('ttsPauseBtn');
+                const ttsResumeBtn = document.getElementById('ttsResumeBtn');
+                const ttsVolume = document.getElementById('ttsVolume');
+                const ttsStatus = document.getElementById('ttsStatus');
+                const ttsVoiceSelect = document.getElementById('ttsVoiceSelect');
+
+                let currentBook = null;
+                let currentPage = 0;
+                let totalPages = 0;
+                let fontSize = 16;
+                let pages = [];
+
+                // Переменные для TTS
+                let utterance = null;
+                let isPaused = false;
+                let ruVoice = null;
+                let isUserStopped = false;
+
+                // Обработчик клика по области загрузки
+                dropArea.addEventListener('click', () => fileInput.click());
+
+                // Обработчик перетаскивания
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropArea.addEventListener(eventName, preventDefaults, false);
+                });
+
+                function preventDefaults(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropArea.addEventListener(eventName, highlight, false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropArea.addEventListener(eventName, unhighlight, false);
+                });
+
+                function highlight(e) {
+                    dropArea.style.backgroundColor = '#252535';
+                }
+
+                function unhighlight(e) {
+                    dropArea.style.backgroundColor = '#1e1e2e';
+                }
+
+                dropArea.addEventListener('drop', handleDrop, false);
+
+                function handleDrop(e) {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    if (files.length) {
+                        handleFiles(files);
+                    }
+                }
+
+                fileInput.addEventListener('change', function (e) {
+                    if (this.files.length) {
+                        handleFiles(this.files);
+                    }
+                });
+
+                function handleFiles(files) {
+                    const file = files[0];
+                    if (file.name.endsWith('.fb2')) {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            // Определяем кодировку
+                            const buffer = e.target.result;
+                            const uint8Array = new Uint8Array(buffer);
+                            let encoding = 'utf-8';
+
+                            // Проверка BOM
+                            if (uint8Array[0] === 0xEF && uint8Array[1] === 0xBB && uint8Array[2] === 0xBF) {
+                                encoding = 'utf-8';
+                            } else if (uint8Array[0] === 0xFF && uint8Array[1] === 0xFE) {
+                                encoding = 'utf-16le';
+                            } else if (uint8Array[0] === 0xFE && uint8Array[1] === 0xFF) {
+                                encoding = 'utf-16be';
+                            } else {
+                                // Пробуем определить по содержимому
+                                let str = new TextDecoder('windows-1251').decode(buffer.slice(0, 1024));
+                                if (str.includes('encoding="windows-1251"') || str.includes('кодировка')) {
+                                    encoding = 'windows-1251';
+                                } else {
+                                    // Проверяем, не UTF-8 ли это
+                                    try {
+                                        str = new TextDecoder('utf-8').decode(buffer);
+                                        // Если валидный UTF-8
+                                        if (str.indexOf('\uFFFD') === -1) {
+                                            encoding = 'utf-8';
+                                        } else {
+                                            encoding = 'windows-1251';
+                                        }
+                                    } catch (e) {
+                                        encoding = 'windows-1251';
+                                    }
+                                }
+                            }
+
+                            const decoder = new TextDecoder(encoding);
+                            const xmlString = decoder.decode(buffer);
+                            parseFB2(xmlString);
+                        };
+                        reader.readAsArrayBuffer(file);
+                    } else {
+                        alert('Пожалуйста, выберите файл в формате FB2');
+                    }
+                }
+
+                function parseFB2(xmlString) {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlString, 'application/xml');
+
+                    if (xmlDoc.getElementsByTagName('parsererror').length > 0) {
+                        alert('Ошибка при разборе файла FB2');
+                        return;
+                    }
+
+                    // Получение информации о книге
+                    const titleInfo = xmlDoc.getElementsByTagName('title-info')[0];
+                    const bookTitleText = getElementText(titleInfo, 'book-title');
+                    const authorElement = titleInfo.getElementsByTagName('author')[0];
+                    let authorName = 'Неизвестный автор';
+                    if (authorElement) {
+                        const firstName = getElementText(authorElement, 'first-name');
+                        const lastName = getElementText(authorElement, 'last-name');
+                        authorName = `${firstName} ${lastName}`.trim();
+                    }
+
+                    // Получение содержимого книги
+                    const bodyElement = xmlDoc.getElementsByTagName('body')[0];
+                    const contentHTML = parseBody(bodyElement, xmlDoc);
+
+                    currentBook = {
+                        title: bookTitleText,
+                        author: authorName,
+                        content: contentHTML
+                    };
+
+                    showBook();
+                }
+
+                function getElementText(parent, tagName) {
+                    const element = parent.getElementsByTagName(tagName)[0];
+                    return element ? element.textContent.trim() : '';
+                }
+
+                function parseBody(bodyElement, xmlDoc) {
+                    if (!bodyElement) return '';
+
+                    let html = '';
+                    const sections = bodyElement.children;
+
+                    for (let section of sections) {
+                        if (section.tagName === 'section') {
+                            html += parseSection(section);
+                        } else if (section.tagName === 'title') {
+                            html += `<h2>${parseElementText(section)}</h2>`;
+                        } else if (section.tagName === 'p') {
+                            html += `<p>${parseElementText(section)}</p>`;
+                        }
+                    }
+
+                    return html;
+                }
+
+                function parseSection(section) {
+                    let html = '';
+                    const children = section.children;
+
+                    for (let child of children) {
+                        if (child.tagName === 'title') {
+                            html += `<h2>${parseElementText(child)}</h2>`;
+                        } else if (child.tagName === 'p') {
+                            html += `<p>${parseElementText(child)}</p>`;
+                        } else if (child.tagName === 'section') {
+                            html += parseSection(child);
+                        }
+                    }
+
+                    return html;
+                }
+
+                function parseElementText(element) {
+                    let text = '';
+                    for (let node of element.childNodes) {
+                        if (node.nodeType === Node.TEXT_NODE) {
+                            text += node.textContent;
+                        } else if (node.nodeType === Node.ELEMENT_NODE) {
+                            if (node.tagName === 'strong') {
+                                text += `<strong>${node.textContent}</strong>`;
+                            } else if (node.tagName === 'emphasis') {
+                                text += `<em>${node.textContent}</em>`;
+                            } else {
+                                text += node.textContent;
+                            }
+                        }
+                    }
+                    return text.trim();
+                }
+
+                function splitContentIntoPages() {
+                    // Преобразуем HTML в текст для подсчета символов
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = currentBook.content;
+                    const textContent = tempDiv.textContent || tempDiv.innerText || '';
+
+                    // Определяем количество символов на страницу
+                    const charsPerPage = 1900; // Среднее значение из диапазона 2500-4000
+                    pages = [];
+
+                    // Разбиваем текст на страницы
+                    for (let i = 0; i < textContent.length; i += charsPerPage) {
+                        pages.push(textContent.slice(i, i + charsPerPage));
+                    }
+
+                    totalPages = pages.length;
+                    currentPage = 0;
+                }
+
+                function renderPage(pageIndex) {
+                    if (pageIndex < 0 || pageIndex >= pages.length) return;
+
+                    bookContent.textContent = pages[pageIndex];
+                    currentPage = pageIndex;
+                    currentPageSpan.textContent = currentPage + 1;
+                    totalPagesSpan.textContent = totalPages;
+
+                    updatePageIndicators();
+                    updateProgress();
+                }
+
+                function updatePageIndicators() {
+                    pageIndicatorsContainer.innerHTML = '';
+                    for (let i = 0; i < totalPages; i++) {
+                        const indicator = document.createElement('div');
+                        indicator.className = 'page-indicator';
+                        if (i === currentPage) {
+                            indicator.classList.add('active');
+                        }
+                        indicator.addEventListener('click', () => renderPage(i));
+                        pageIndicatorsContainer.appendChild(indicator);
+                    }
+                }
+
+                function showBook() {
+                    bookTitle.textContent = currentBook.title || 'Без названия';
+                    bookAuthor.textContent = currentBook.author;
+
+                    // Разбиваем содержимое на страницы
+                    splitContentIntoPages();
+
+                    // Отображаем первую страницу
+                    renderPage(0);
+
+                    uploadScreen.classList.add('hidden');
+                    readerScreen.classList.remove('hidden');
+                    
+                    // Устанавливаем ограничения для поля ввода страницы
+                    pageJumpInput.max = totalPages;
+                }
+
+                function updateProgress() {
+                    const container = document.querySelector('.book-content-wrapper');
+                    const scrollHeight = container.scrollHeight;
+                    const scrollTop = container.scrollTop;
+                    const clientHeight = container.clientHeight;
+
+                    const progress = ((scrollTop + clientHeight) / scrollHeight) * 100;
+                    progressBar.style.width = Math.min(progress, 100) + '%';
+                }
+
+                document.querySelector('.book-content-wrapper').addEventListener('scroll', updateProgress);
+
+                // Обработчики кнопок постраничной навигации
+                firstPageBtn.addEventListener('click', () => {
+                    renderPage(0);
+                });
+
+                prevPageBtn.addEventListener('click', () => {
+                    if (currentPage > 0) {
+                        renderPage(currentPage - 1);
+                    }
+                });
+
+                nextPageBtn.addEventListener('click', () => {
+                    if (currentPage < totalPages - 1) {
+                        renderPage(currentPage + 1);
+                    }
+                });
+
+                lastPageBtn.addEventListener('click', () => {
+                    renderPage(totalPages - 1);
+                });
+
+                // Обработчики прокрутки
+                // prevBtn.addEventListener('click', () => {
+				//     document.querySelector('.book-content-wrapper').scrollBy({ top: -200, behavior: 'smooth' });
+				// });
+
+				// nextBtn.addEventListener('click', () => {
+				//     document.querySelector('.book-content-wrapper').scrollBy({ top: 200, behavior: 'smooth' });
+				// });
+
+                fontSizeUp.addEventListener('click', () => {
+                    fontSize += 2;
+                    bookContent.style.fontSize = fontSize + 'px';
+                    // Пересчитываем страницы при изменении размера шрифта
+                    if (currentBook) {
+                        splitContentIntoPages();
+                        renderPage(currentPage);
+                    }
+                });
+
+                fontSizeDown.addEventListener('click', () => {
+                    if (fontSize > 8) {
+                        fontSize -= 2;
+                        bookContent.style.fontSize = fontSize + 'px';
+                        // Пересчитываем страницы при изменении размера шрифта
+                        if (currentBook) {
+                            splitContentIntoPages();
+                            renderPage(currentPage);
+                        }
+                    }
+                });
+
+                themeBtn.addEventListener('click', () => {
+                    document.body.classList.toggle('light-theme');
+                    themeBtn.textContent = document.body.classList.contains('light-theme') ? 'Тёмная тема' : 'Светлая тема';
+
+                    if (document.body.classList.contains('light-theme')) {
+                        document.documentElement.style.setProperty('--bg-dark', '#ffffff');
+                        document.documentElement.style.setProperty('--bg-panel', '#f5f5f5');
+                        document.documentElement.style.setProperty('--text-light', '#333333');
+                    } else {
+                        document.documentElement.style.setProperty('--bg-dark', '#12121e');
+                        document.documentElement.style.setProperty('--bg-panel', '#1e1e2e');
+                        document.documentElement.style.setProperty('--text-light', '#e0e0f0');
+                    }
+                });
+
+                closeBtn.addEventListener('click', () => {
+                    readerScreen.classList.add('hidden');
+                    uploadScreen.classList.remove('hidden');
+                    fileInput.value = '';
+                    currentBook = null;
+                    pages = [];
+                    totalPages = 0;
+                    currentPage = 0;
+                    // Останавливаем TTS при закрытии
+                    if (utterance) {
+                        speechSynthesis.cancel();
+                        utterance = null;
+                        ttsStatus.textContent = 'Готов';
+                    }
+                });
+
+                // === TTS Модуль (улучшенный - без Google) ===
+                function setupTTS() {
+                    // Проверяем, поддерживает ли браузер Web Speech API
+                    if ('speechSynthesis' in window) {
+                        // Находим русские голоса при загрузке
+                        function findAndPopulateVoices() {
+                            const allVoices = speechSynthesis.getVoices();
+                            // Фильтруем русские голоса, исключая Google
+                            const russianVoices = allVoices
+                                .filter(voice => voice.lang.startsWith('ru') && !voice.name.toLowerCase().includes('google'))
+                                .sort((a, b) => a.name.localeCompare(b.name));
+
+                            // Обновляем список голосов в выпадающем меню
+                            ttsVoiceSelect.innerHTML = '';
+                            if (russianVoices.length === 0) {
+                                const opt = document.createElement('option');
+                                opt.textContent = 'Русские голоса не найдены';
+                                ttsVoiceSelect.appendChild(opt);
+                            } else {
+                                russianVoices.forEach(voice => {
+                                    const opt = document.createElement('option');
+                                    opt.value = voice.name;
+                                    opt.textContent = `${voice.name} (${voice.lang})`;
+                                    ttsVoiceSelect.appendChild(opt);
+                                });
+                            }
+
+                            // Восстанавливаем сохранённый голос
+                            const savedVoice = localStorage.getItem('tts_selected_voice');
+                            if (savedVoice && russianVoices.some(v => v.name === savedVoice)) {
+                                ttsVoiceSelect.value = savedVoice;
+                                ruVoice = allVoices.find(v => v.name === savedVoice);
+                            } else if (russianVoices.length > 0) {
+                                ttsVoiceSelect.value = russianVoices[0].name;
+                                ruVoice = russianVoices[0];
+                            }
+                        }
+
+                        // Обработчик изменения голосов (иногда голоса загружаются асинхронно)
+                        speechSynthesis.onvoiceschanged = findAndPopulateVoices;
+                        findAndPopulateVoices(); // Вызываем сразу
+                    } else {
+                        console.error('Web Speech API не поддерживается в этом браузере');
+                        ttsStatus.textContent = 'TTS не поддерживается';
+                        ttsPlayBtn.disabled = true;
+                    }
+                }
+
+                // Инициализация TTS
+                setupTTS();
+
+                // Обработчик выбора голоса
+                ttsVoiceSelect.addEventListener('change', function () {
+                    const selectedVoiceName = this.value;
+                    const allVoices = speechSynthesis.getVoices();
+                    ruVoice = allVoices.find(v => v.name === selectedVoiceName);
+                    localStorage.setItem('tts_selected_voice', selectedVoiceName);
+                });
+
+                // Функция запуска TTS
+                ttsPlayBtn.addEventListener('click', () => {
+                    if (!currentBook || !pages[currentPage]) {
+                        ttsStatus.textContent = 'Нет текста для чтения';
+                        return;
+                    }
+
+                    if (isPaused && utterance) {
+                        // Продолжаем с паузы
+                        speechSynthesis.resume();
+                        ttsStatus.textContent = 'Воспроизведение';
+                        isPaused = false;
+                        return;
+                    }
+
+                    // Останавливаем предыдущее воспроизведение
+                    speechSynthesis.cancel();
+                    isUserStopped = false; // Сбрасываем флаг
+
+                    // Создаём новый объект utterance
+                    utterance = new SpeechSynthesisUtterance(pages[currentPage]);
+
+                    // Настройка голоса
+                    if (ruVoice) {
+                        utterance.voice = ruVoice;
+                    }
+
+                    utterance.lang = 'ru-RU';
+                    utterance.rate = 1.0;
+                    utterance.pitch = 1.0;
+                    utterance.volume = parseFloat(ttsVolume.value);
+
+                    // Обработчики событий
+                    utterance.onstart = () => {
+                        ttsStatus.textContent = 'Воспроизведение';
+                    };
+
+                    utterance.onend = () => {
+                        ttsStatus.textContent = 'Завершено';
+                        isPaused = false;
+                    };
+
+                    utterance.onerror = (event) => {
+                        if (event.error === 'interrupted') {
+                            if (isUserStopped) {
+                                ttsStatus.textContent = 'Остановлено';
+                            } else {
+                                ttsStatus.textContent = 'Озвучка прервана';
+                            }
+                            isUserStopped = false;
+                        } else {
+                            ttsStatus.textContent = `Ошибка: ${event.error}`;
+                        }
+                        isPaused = false;
+                    };
+
+                    // Запуск синтеза
+                    speechSynthesis.speak(utterance);
+                });
+
+                ttsStopBtn.addEventListener('click', () => {
+                    speechSynthesis.cancel();
+                    utterance = null;
+                    isUserStopped = true;
+                    ttsStatus.textContent = 'Остановлено';
+                    isPaused = false;
+                });
+
+                ttsPauseBtn.addEventListener('click', () => {
+                    if (utterance && !isPaused) {
+                        speechSynthesis.pause();
+                        ttsStatus.textContent = 'На паузе';
+                        isPaused = true;
+                    }
+                });
+
+                ttsResumeBtn.addEventListener('click', () => {
+                    if (utterance && isPaused) {
+                        speechSynthesis.resume();
+                        ttsStatus.textContent = 'Воспроизведение';
+                        isPaused = false;
+                    }
+                });
+
+                ttsVolume.addEventListener('input', () => {
+                    if (utterance) {
+                        // Обновляем громкость в реальном времени
+                        utterance.volume = parseFloat(ttsVolume.value);
+                    }
+                });
+
+                // === Обработчики для перехода по странице ===
+                pageJumpBtn.addEventListener('click', () => {
+                    const inputPage = parseInt(pageJumpInput.value);
+                    if (inputPage >= 1 && inputPage <= totalPages) {
+                        renderPage(inputPage - 1); // Индексация с 0
+                        pageJumpInput.value = ''; // Очищаем поле после перехода
+                    } else {
+                        alert(`Введите число от 1 до ${totalPages}`);
+                    }
+                });
+
+                // Также можно нажать Enter в поле ввода
+                pageJumpInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        pageJumpBtn.click();
+                    }
+                });
+            });
+        </script>
+
+
+
+
+    </body>
+
+</html>
